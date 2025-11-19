@@ -1,100 +1,71 @@
 package com.example.demo.servicesImplementations;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
-
+import com.example.demo.models.Role;
 import com.example.demo.models.User;
+import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.UserService;
 
 @Service 
 public class UserServiceImplementation implements UserService{
 	
-	private final List<User> users = new ArrayList<>();
+	private final UserRepository userRepository;
 	
-	public UserServiceImplementation() {
-	       users.add(new User(1L, "john", "john123", "John Haddad", "Admin", true));
-	       users.add(new User(2L, "jane", "jane1", "Jane Zein", "Club Manager", true));
-	       users.add(new User(3L, "fatima", "fatima3", "Fatima Jaffal", "Student", true));
-	}
+    public UserServiceImplementation(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
 	@Override
-	public User createUser(User user) {
-		for (User u : users) {
-		    if (u.getUsername().equalsIgnoreCase(user.getUsername())) {
-		        throw new RuntimeException("Username already exists");
-		    }
-		}
-		users.add(user);
-		return user;
-	}
+    public User createUser(User user) {
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new RuntimeException("Username already exists");
+        }
+        return userRepository.save(user);
+    }
 	
 	@Override
-	public List<User> getAllUsers() {
-		return new ArrayList<>(users);
-	}
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
 
 	@Override
-	public User getUserById(Long id) {
-		for (User user : users) {
-			if (user.getId().equals(id)) {
-	            return user;
-	        }
-		}
-		throw new NoSuchElementException("User not found");
-	}
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+    }
 	
 	@Override
-	public User findByUsername(String username) {
-		for (User user : users) {
-			if (user.getUsername().equalsIgnoreCase(username)) {
-	            return user;
-	        }
-		}
-		throw new NoSuchElementException("User not found");
-	}
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+    }
 	
 	@Override
-	public User login(String username, String password) {
-	   User user = findByUsername(username);
+    public User login(String username, String password) {
+        User user = findByUsername(username);
 
-	   if (!user.getPassword().equals(password)) {
-			throw new RuntimeException("Incorrect password");
-	   }
-	   return user;  
-	}
+        if (!user.getPassword().equals(password)) {
+            throw new RuntimeException("Incorrect password");
+        }
+        return user;
+    }
 	
 	@Override
-	public void deactivateUser(Long id) {
-	    for (User user : users) {
-	        if (user.getId().equals(id)) {
-	            user.setActive(false);
-	            return;
-	        }
-	    }
-	    throw new NoSuchElementException("User not found");
-	}
+    public int getActiveStudentsCount() {
+        return userRepository.countByRoleAndActive(Role.STUDENT, true);
+    }
 
 	@Override
-	public int getActiveStudentsCount() {
-		int count = 0;
-	    for (User user : users) {
-	        if (user.isActive() && user.getRole().equalsIgnoreCase("Student")) {
-	            count = count + 1;
-	        }
-	    }
-	    return count;
-	}
+    public void deactivateUser(Long id) {
+        User user = getUserById(id);
+        user.setActive(false);
+        userRepository.save(user);
+    }
 	
 	@Override
-	public List<User> getUsersByRole(String role) {
-		List<User> result = new ArrayList<>();
-		for (User user : users) {
-			if (user.getRole().equalsIgnoreCase(role)) {
-	            result.add(user);
-	        }
-		}
-		return result;
-	}
+    public List<User> getUsersByRole(Role role) {
+        return userRepository.findByRole(role);
+    }
 
 }

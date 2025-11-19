@@ -1,78 +1,67 @@
 package com.example.demo.servicesImplementations;
 import org.springframework.stereotype.Service;
-
 import com.example.demo.models.Club;
+import com.example.demo.repositories.ClubRepository;
 import com.example.demo.services.ClubService;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service 
 public class ClubServiceImplementation implements ClubService{
 
-	private final List<Club> clubs = new ArrayList<>();
+	private final ClubRepository clubRepository;
 	
+	public ClubServiceImplementation(ClubRepository clubRepository) {
+        this.clubRepository = clubRepository;
+    }
+
 	@Override
-	public Club createClub(Club club) {
-		for (Club c : clubs) {
-		    if (c.getId().equals(club.getId())) {
-		        throw new RuntimeException("Club ID already exists");
-		    }
-		}
-		clubs.add(club);
-		return club;
-	}
+    public Club createClub(Club club) {
+        //prevent duplicate club names
+        if (clubRepository.existsByName(club.getName())) {
+            throw new RuntimeException("A club with this name already exists");
+        }
+        return clubRepository.save(club);
+    }
 
 	@Override
 	public List<Club> getAllClubs() {
-		return new ArrayList<>(clubs);
+	    return clubRepository.findAll();
 	}
 	
 	@Override
 	public Club updateClub(Long id, Club updatedClub) {
-		for (Club club : clubs) {
-			if (club.getId().equals(id)) {
-				club.setName(updatedClub.getName());
-				club.setDescription(updatedClub.getDescription());
-				club.setManagerId(updatedClub.getManagerId());
-				return club;
-			}
-		}
-		throw new NoSuchElementException("Club not found");
+	    Club existingClub = clubRepository.findById(id)
+	         .orElseThrow(() -> new NoSuchElementException("Club not found"));
+
+	    existingClub.setName(updatedClub.getName());
+	    existingClub.setDescription(updatedClub.getDescription());
+	    existingClub.setManagerId(updatedClub.getManagerId());
+
+	    return clubRepository.save(existingClub);
 	}
+
+	@Override
+    public void deleteClub(Long id) {
+        if (!clubRepository.existsById(id)) {
+            throw new NoSuchElementException("Club not found");
+        }
+        clubRepository.deleteById(id);
+    }
 	
 	@Override
-	public void deleteClub(Long id) {
-		boolean removed = clubs.removeIf(club -> club.getId().equals(id));
-	    if (!removed) {
-	        throw new NoSuchElementException("Club not found");
-	    }
-	}
+    public Club getClubById(Long id) {
+        return clubRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Club not found"));
+    }
 	
 	@Override
-	public Club getClubById(Long id) {
-		for (Club club : clubs) {
-			if (club.getId().equals(id)) {
-	            return club;
-	        }
-		}
-		throw new NoSuchElementException("Club not found");
-	}
+    public List<Club> searchClubsByName(String name) {
+        return clubRepository.findByNameContainingIgnoreCase(name);
+    }
 	
 	@Override
-	public List<Club> searchClubsByName(String name){
-		List<Club> result = new ArrayList<>();
-		for (Club club : clubs) {
-			if (club.getName().toLowerCase().contains(name.toLowerCase())) {
-				result.add(club);
-	        }
-		}
-		return result;
-	}
-	
-	@Override
-	public int getClubsCount() {
-		return clubs.size();
-	}
+    public int getClubsCount() {
+        return (int) clubRepository.count();
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.demo.services;
 import java.util.List;
 
+import com.example.demo.models.Role;
 import com.example.demo.models.User;
 
 public interface UserService {
@@ -9,7 +10,7 @@ public interface UserService {
 	public List<User> getAllUsers();
 	
 	//Admin can filter users by role
-    public List<User> getUsersByRole(String role);
+    public List<User> getUsersByRole(Role role);
     
     //Admin can view a user by ID
   	public User getUserById(Long id);
