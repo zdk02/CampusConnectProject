@@ -1,7 +1,7 @@
 package com.example.demo.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
+import com.example.demo.models.Role;
 import com.example.demo.models.User;
 import com.example.demo.services.UserService;
 
@@ -40,7 +40,7 @@ public class UserController {
     
     //Find user by role
     @GetMapping("/by-role")
-    public List<User> getUsersByRole(@RequestParam String role) {
+    public List<User> getUsersByRole(@RequestParam Role role) {
         return userService.getUsersByRole(role);
     }
     
@@ -51,7 +51,7 @@ public class UserController {
     }
     
     //Deactivate a user (Admin)
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/deactivate")
     public String deactivateUser(@PathVariable Long id) {
         userService.deactivateUser(id);
         return "User deactivated successfully";

@@ -1,10 +1,8 @@
 package com.example.demo.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import com.example.demo.models.Club;
 import com.example.demo.services.ClubService;
-
 import java.util.List;
 
 @RestController
@@ -17,7 +15,6 @@ public class ClubController {
 	//Create Club
 	@PostMapping("/create")
 	public Club createClub(@RequestBody Club club) {
-
 		Club savedClub = clubService.createClub(club);
 		return savedClub;
 	}
@@ -42,12 +39,11 @@ public class ClubController {
 
     //Update Club
     @PutMapping("/{id}")
-    public Club updateClub(@PathVariable Long id,
-    					   @RequestBody Club updatedClub) {
-    	updatedClub.setId(id);
+    public Club updateClub(@PathVariable Long id, @RequestBody Club updatedClub) {
         return clubService.updateClub(id, updatedClub);
     }
 
+    
     //Delete Club
     @DeleteMapping("/{id}")
     public String deleteClub(@PathVariable Long id) {
