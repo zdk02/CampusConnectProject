@@ -1,17 +1,16 @@
 package com.example.demo.services;
 import java.util.List;
-
 import com.example.demo.models.Club;
 
 public interface ClubService {
 
-	//Only Club Managers can create new clubs
-	public Club createClub(Club club);
+	// Club Managers can create new clubs (linked to their account)
+    public Club createClub(Club club, Long managerId);
 	
 	//Club Managers can update the clubs they manage
 	//Admins can update any club
 	public Club updateClub(Long id, Club updatedClub);
-	
+
 	//Only Admins can delete any club
     public void deleteClub(Long id);
     
@@ -22,4 +21,7 @@ public interface ClubService {
     
     //Admin can view the number of clubs
     public int getClubsCount();
-}
+    
+    // Get clubs managed by a specific manager
+    public List<Club> getClubsByManager(Long managerId);
+} 
