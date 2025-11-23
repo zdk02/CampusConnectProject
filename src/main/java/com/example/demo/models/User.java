@@ -17,18 +17,19 @@ public class User {
 	private String username;
 	
 	@NotBlank(message = "Password is required")
-	@Pattern(
-	    regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$",
-	    message = "Password must contain at least 8 characters, uppercase, lowercase, number, and special character"
-	)
-	@Column(nullable = false, length = 255)
-	private String password;
+    @Size(min = 6, message = "Password must be at least 6 characters")
+    @Column(nullable = false, length = 255)
+    private String password;
 
 	@NotBlank(message = "Full name is required")
 	@Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
 	@Column(nullable = false, length = 100)
 	private String fullName;
 	
+	@Email(message = "Email should be valid")
+    @Column(unique = true, length = 100)
+    private String email;
+
 	@Enumerated(EnumType.STRING)
 	@NotNull(message = "Role is required")
 	@Column(nullable = false, length = 20)
@@ -40,10 +41,11 @@ public class User {
 	//Constructors
 	public User() {}
 	
-	public User(String username, String password, String fullName, Role role, boolean active) {
+	public User(String username, String password, String fullName, String email, Role role, boolean active) {
 		this.username = username;
 		this.password = password;
 		this.fullName = fullName;
+		this.email = email;
 		this.role = role;
 		this.active = active;
 	}
@@ -66,6 +68,10 @@ public class User {
 		return fullName;
 	}
 
+	public String getEmail() {
+        return email;
+    }
+	
 	public Role getRole() {
 		return role;
 	}
@@ -75,7 +81,6 @@ public class User {
 	}
 
 	//Setters
-	
 	public void setUsername(String username) {
 		this.username = username;
 	}
@@ -88,6 +93,10 @@ public class User {
 		this.fullName = fullName;
 	}
 	
+	public void setEmail(String email) {
+        this.email = email;
+    }
+	
 	public void setRole(Role role) {
 		this.role = role;
 	}
@@ -96,4 +105,3 @@ public class User {
 		this.active = active;
 	}
 }
-//should do hashing

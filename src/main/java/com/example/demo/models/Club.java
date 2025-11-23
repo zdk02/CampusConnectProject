@@ -1,6 +1,7 @@
 package com.example.demo.models;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "clubs")
@@ -12,27 +13,28 @@ public class Club {
 	
 	@NotBlank(message = "Club name is required")
     @Size(min = 3, max = 100, message = "Club name must be between 3 and 100 characters")
-    @Column(nullable = false, length = 100)
-	private String name;
+    @Column(nullable = false, unique = true, length = 100)
+    private String name;
 	
 	@NotBlank(message = "Description is required")
     @Size(min = 10, max = 1000, message = "Description must be between 10 and 1000 characters")
     @Column(nullable = false, length = 1000)
     private String description;
 	
-	@NotNull(message = "Manager ID is required")
-	@Positive(message = "Manager ID must be a positive number")
-    @Column(nullable = false)
-    private Long managerId;
+	@ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "manager_id", nullable = false)
+    @JsonIgnoreProperties({"password", "active"})
+    @NotNull(message = "Manager is required")
+    private User manager;
     
     //Constructors
     public Club() {}
     
-    public Club(String name, String description, Long managerId) {
-		this.name = name;
-		this.description = description;
-		this.managerId = managerId;
-	}
+    public Club(String name, String description, User manager) {
+        this.name = name;
+        this.description = description;
+        this.manager = manager;
+    }
 
     //Getters
 	public Long getId() {
@@ -47,9 +49,9 @@ public class Club {
 		return description;
 	}
 
-	public Long getManagerId() {
-		return managerId;
-	} 
+	public User getManager() {
+        return manager;
+    } 
     
 	//Setters
 	public void setName(String name) {
@@ -60,7 +62,7 @@ public class Club {
 		this.description = description;
 	}
     
-	public void setManagerId(Long managerId) {
-		this.managerId = managerId;
-	}
+	public void setManager(User manager) {
+        this.manager = manager;
+    }
 }

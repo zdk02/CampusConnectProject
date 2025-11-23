@@ -1,61 +1,147 @@
 package com.example.demo.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import com.example.demo.models.Club;
+import com.example.demo.models.Role;
+import com.example.demo.models.User;
 import com.example.demo.services.ClubService;
-import java.util.List;
+import com.example.demo.services.UserService;
 
 @RestController
 @RequestMapping("/clubs")
 public class ClubController {
 
-	 @Autowired //it injects an existing bean into my class
-	 private ClubService clubService;
+	@Autowired //it injects an existing bean into my class
+	private ClubService clubService;
 	
-	//Create Club
+	@Autowired
+    private UserService userService;
+	
+	private ResponseEntity<?> checkAdmin(Long requesterId) {
+        User requester = userService.getUserById(requesterId);
+        if (requester == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("User not found");
+        }
+        if (requester.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("Only admins can perform this action");
+        }
+        return null;
+    }
+
+	private ResponseEntity<?> checkClubManager(Long managerId) {
+        User manager = userService.getUserById(managerId);
+        if (manager == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Manager not found");
+        }
+        if (manager.getRole() != Role.CLUB_MANAGER) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("Only Club Managers can perform this action");
+        }
+        return null;
+    }
+
+	// Create Club (Club Manager only)
 	@PostMapping("/create")
-	public Club createClub(@RequestBody Club club) {
-		Club savedClub = clubService.createClub(club);
-		return savedClub;
-	}
+    public ResponseEntity<?> createClub(
+            @RequestBody Club club, 
+            @RequestParam Long managerId) {
+        
+        ResponseEntity<?> authCheck = checkClubManager(managerId);
+        if (authCheck != null) return authCheck;
+        
+        Club savedClub = clubService.createClub(club, managerId);
+        return ResponseEntity.ok(savedClub);
+    }
 	
 	//Get All Clubs
-    @GetMapping
-    public List<Club> getAllClubs() {
-        return clubService.getAllClubs();
+	@GetMapping
+    public ResponseEntity<?> getAllClubs() {
+        return ResponseEntity.ok(clubService.getAllClubs());
     }
     
-    //Search Clubs by name
+	//Search Clubs by name
     @GetMapping("/search")
-    public List<Club> searchClubs(@RequestParam String name) {
-        return clubService.searchClubsByName(name);
+    public ResponseEntity<?> searchClubs(@RequestParam String name) {
+        return ResponseEntity.ok(clubService.searchClubsByName(name));
     }
 
     //Get Club by ID
     @GetMapping("/{id}")
-    public Club getClubById(@PathVariable Long id) {
-        return clubService.getClubById(id);
+    public ResponseEntity<?> getClubById(@PathVariable Long id) {
+        Club club = clubService.getClubById(id);
+        if (club == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Club not found");
+        }
+        return ResponseEntity.ok(club);
     }
-
-    //Update Club
+    
+    //Update Club (Club Manager of that club only)
     @PutMapping("/{id}")
-    public Club updateClub(@PathVariable Long id, @RequestBody Club updatedClub) {
-        return clubService.updateClub(id, updatedClub);
+    public ResponseEntity<?> updateClub(
+            @PathVariable Long id, 
+            @RequestBody Club updatedClub,
+            @RequestParam Long requesterId) {
+        
+        User requester = userService.getUserById(requesterId);
+        if (requester == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("User not found");
+        }
+
+        Club existingClub = clubService.getClubById(id);
+        if (existingClub == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Club not found");
+        }
+        
+        // Only the club's manager can update it
+        if (requester.getRole() != Role.CLUB_MANAGER) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("Only Club Managers can update clubs");
+        }
+        
+        if (!existingClub.getManager().getId().equals(requesterId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("You can only update your own clubs");
+        }
+        
+        return ResponseEntity.ok(clubService.updateClub(id, updatedClub));
+    }
+    
+    //Delete Club (Admin only)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteClub(
+            @PathVariable Long id,
+            @RequestParam Long requesterId) {
+        
+        ResponseEntity<?> authCheck = checkAdmin(requesterId);
+        if (authCheck != null) return authCheck;
+        
+        clubService.deleteClub(id);
+        return ResponseEntity.ok("Club deleted successfully");
+    }
+    
+    // Get Clubs Count (Admin only)
+    @GetMapping("/count")
+    public ResponseEntity<?> getClubsCount(@RequestParam Long requesterId) {
+        ResponseEntity<?> authCheck = checkAdmin(requesterId);
+        if (authCheck != null) return authCheck;
+        
+        return ResponseEntity.ok(clubService.getClubsCount());
     }
 
-    
-    //Delete Club
-    @DeleteMapping("/{id}")
-    public String deleteClub(@PathVariable Long id) {
-        clubService.deleteClub(id);
-        return "Club deleted successfully";
-    }
-    
-    //Get Clubs Count (Admin)
-    @GetMapping("/count")
-    public int getClubsCount() {
-        return clubService.getClubsCount();
+    // Get clubs by manager (Club Manager only - to see their own clubs)
+    @GetMapping("/my-clubs")
+    public ResponseEntity<?> getMyClubs(@RequestParam Long managerId) {
+        ResponseEntity<?> authCheck = checkClubManager(managerId);
+        if (authCheck != null) return authCheck;
+        
+        return ResponseEntity.ok(clubService.getClubsByManager(managerId));
     }
 }
-
-//later should put admin endpoints under /admin

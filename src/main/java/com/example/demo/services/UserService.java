@@ -1,6 +1,5 @@
 package com.example.demo.services;
 import java.util.List;
-
 import com.example.demo.models.Role;
 import com.example.demo.models.User;
 
@@ -21,8 +20,11 @@ public interface UserService {
     //Admin can get the number of active students
     public int getActiveStudentsCount();
     
-	//Admin can add new users
-	public User createUser(User user);
+    // Admin can update a user
+    public User updateUser(Long id, User updatedUser);
+
+    // Admin can delete a user
+    public void deleteUser(Long id);
     
     //Admin can deactivate a user account
     public void deactivateUser(Long id);
